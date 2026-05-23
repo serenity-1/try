@@ -1,0 +1,29 @@
+name: Daily Commit
+
+on:
+  schedule:
+    # Runs daily at 00:05 UTC (adjust as needed)
+    - cron: "5 0 * * *"
+  workflow_dispatch:
+
+jobs:
+  commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Make a change
+        run: |
+          echo "$(date -u) - automated commit" >> .keepalive
+
+      - name: Commit changes
+        continue-on-error: true
+        run: |
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
+          git add .
+          git commit -m "chore: daily heartbeat $(date -u +%F)" || exit 0
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:${{ github.ref_name }}   
